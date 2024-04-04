@@ -1,111 +1,131 @@
 #! /usr/bin/env node
 import inquirer from "inquirer";
-const todoList = [];
-const mainMenu = () => {
-    inquirer
-        .prompt([
+let todos = [];
+console.log("\t Welcome to the Todo APP");
+async function mainMenu() {
+    let mainMenuChoice = await inquirer.prompt([
         {
+            name: "mainMenu",
             type: "list",
-            name: "action",
-            message: "What do you want to do?",
-            choices: ["Add a task", "Complete a task", "View tasks", "Exit"],
+            choices: ["Add task", "Delete Task", "Edit Task", "Exit"],
         },
-    ])
-        .then((answer) => {
-        switch (answer.action) {
-            case "Add a task":
-                addTask();
-                break;
-            case "Complete a task":
-                completeTask();
-                break;
-            case "View tasks":
-                viewTasks();
-                break;
-            case "Exit":
-                console.log("Goodbye!");
-                break;
-        }
-    });
-};
-const addTask = () => {
-    inquirer
-        .prompt([
-        {
-            type: "input",
-            name: "task",
-            message: "Enter the task:",
-        },
-    ])
-        .then((answer) => {
-        const newTask = {
-            task: answer.task,
-            completed: false,
-        };
-        todoList.push(newTask);
-        console.log("Task added successfully!");
-        mainMenu();
-    });
-};
-const completeTask = () => {
-    inquirer
-        .prompt([
-        {
-            type: "checkbox",
-            name: "tasks",
-            message: "Select tasks to mark as complete:",
-            choices: todoList.map((item) => ({ name: item.task, value: item })),
-        },
-    ])
-        .then((answer) => {
-        answer.tasks.forEach((task) => {
-            task.completed = true;
+    ]);
+    switch (mainMenuChoice.mainMenu) {
+        case "Add task":
+            await addTask();
+            break;
+        case "Delete Task":
+            await deleteTask();
+            break;
+        case "Edit Task":
+            await editTask();
+            break;
+        case "Exit":
+            console.log(`Thanks for Using Todo App "Good Bye"`);
+            return;
+    }
+    await mainMenu();
+}
+async function addTask() {
+    let condition = true;
+    while (condition) {
+        let addTask = await inquirer.prompt([
+            {
+                name: "todo",
+                type: "input",
+                message: "what do you want to add in you Todos ?",
+                validate: (input) => {
+                    if (input.trim() === "") {
+                        return "Value cannot be empty. Please enter a valid value.";
+                    }
+                    return true;
+                },
+            },
+            {
+                name: "addMore",
+                type: "confirm",
+                message: "Do you you want to add more ",
+                default: "false",
+            },
+        ]);
+        todos.push(addTask.todo);
+        condition = addTask.addMore;
+        todos.forEach((todo) => {
+            console.log(todo);
         });
-        console.log("Tasks marked as complete!");
-        mainMenu();
-    });
-};
-const viewTasks = () => {
-    console.log("Current tasks:");
-    todoList.forEach((item, index) => {
-        console.log(`${index + 1}. [${item.completed ? "x" : " "}] ${item.task}`);
-    });
-    mainMenu();
-};
-mainMenu();
-///////////////////////////////////////////////////////
-// let fruit = ["apple", "banana"]
-// fruit.push("melon")
-// fruit.pop()
-// console.log(fruit)
-// fruit = fruit.concat(["melon","kiwi"])
-// console.log(fruit)
-// let ramadandays = 0;
-// while(ramadandays <= 30){
-//     console.log("fasting");
-//     console.log("five times prayers");
-//     console.log(ramadandays);
-//     ramadandays++;
-// }
-// let todos = [];
-// let condition = true;
-// while(condition){
-// let addTask = await inquirer.prompt(
-//     [
-//         {
-//             name: "todo",
-//             type: "input",
-//             message:"what do you want to add in you Todos ?"
-//         },
-//         {
-//             name: "addMore",
-//             type: "confirm",
-//             message:"Do you you want to add more ",
-//             default: "false"
-//         }
-//     ]
-// );
-// todos.push(addTask.todo)
-// condition = addTask.addMore
-// console.log(todos)
-// }
+    }
+}
+async function deleteTask() {
+    let deleteTask = await inquirer.prompt([
+        {
+            name: "delete",
+            type: "confirm",
+            message: "Do you you want to Delete todos ",
+            default: "false",
+        },
+    ]);
+    if (deleteTask.delete === true) {
+        const deleteTaskPrompt = await inquirer.prompt([
+            {
+                type: "list",
+                name: "taskToDelete",
+                message: "Select a task to delete:",
+                choices: todos,
+            },
+        ]);
+        let taskToDelete = deleteTaskPrompt.taskToDelete;
+        const index = todos.indexOf(taskToDelete);
+        if (index !== -1) {
+            todos.splice(index, 1);
+            console.log(`Deleted task: ${taskToDelete}`);
+        }
+        else {
+            console.log(`Task "${taskToDelete}" not found in the list.`);
+        }
+        todos.forEach((todo) => {
+            console.log(todo);
+        });
+    }
+}
+async function editTask() {
+    let editTask = await inquirer.prompt([
+        {
+            name: "edit",
+            type: "confirm",
+            message: "Do you you want to Edit todos ",
+            default: "false",
+        },
+    ]);
+    if (editTask.edit === true) {
+        let selectedItem = await inquirer.prompt({
+            type: "list",
+            name: "selectedItem",
+            message: "Select a task to edit:",
+            choices: todos,
+        });
+        let editedValue = await inquirer.prompt({
+            type: "input",
+            name: "editedValue",
+            message: `Enter the new value for "${selectedItem.selectedItem}":`,
+            validate: (input) => {
+                if (input.trim() === "") {
+                    return "Value cannot be empty. Please enter a valid value.";
+                }
+                return true;
+            },
+        });
+        let selectedIndex = todos.indexOf(selectedItem.selectedItem);
+        if (selectedIndex !== -1) {
+            todos[selectedIndex] = editedValue.editedValue;
+            console.log(`"${selectedItem.selectedItem}" updated to "${editedValue.editedValue}".`);
+        }
+        else {
+            console.log(`"${selectedItem.selectedItem}" not found in the list.`);
+        }
+        todos.forEach((todo) => {
+            console.log(todo);
+        });
+    }
+}
+await mainMenu();
+// // read , update, delete, add home work
